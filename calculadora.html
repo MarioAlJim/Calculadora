@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="es">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Calculadora de creditos</title>
+        <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                background-color: #f0f0f0;
+                padding: 0;
+                font-size: 16px;
+            }
+
+            #fontControls {
+                position: fixed;
+                bottom: 20px;
+                left: 20px;
+                justify-content: space-around;
+                margin: 20px;
+            }
+
+    
+            #container {
+                max-width: 600px;
+                padding: 20px;
+                background-color: #fff;
+                border-radius: 10px;
+                box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            }
+    
+            h2 {
+                color: #007bff;
+            }
+
+            .buttonAdd {
+                border: 2px solid #007bff;
+                padding: 8px 12px;
+                margin: 0 1px;
+                border-radius: 10px;
+                cursor: pointer;
+            }
+
+            .buttonRemove {
+                border: 2px solid #ff0000;
+                padding: 8px 12px;
+                margin: 0 1px;
+                border-radius: 10px;
+                cursor: pointer;
+            }
+    
+            label {
+                display: block;
+                margin-bottom: 10px;
+                color: #333;
+            }
+    
+            input[type="number"] {
+                width: 50%;
+                padding: 8px;
+                margin-bottom: 10px;
+                border: 1px solid #ccc;
+                border-radius: 5px;
+                font-size: 16px;
+            }
+    
+            table {
+                table-layout:auto;
+                width: 100%;
+                margin-top: 20px;
+            }
+    
+            th, td {
+                border: 1px solid #ddd;
+                padding: 8px;
+                text-align: center;
+            }
+    
+            th {
+                background-color: #007bff;
+                color: #fff;
+            }
+
+            tr:nth-child(even) {
+                background-color: #f2f2f2;
+            }
+
+            .highlighted {
+                background-color: #30d854 !important;
+            }
+
+            #divbody {
+                justify-content: space-around;
+                margin: 20px;
+            }
+        </style>
+    </head>
+    <body>
+        <div id="divbody">
+            <div>
+                <h2>Calculadora de creditos</h2>
+                <form>
+                    <label for="credits">Ingrese el numero de creditos:</label>
+                    <button type="button" id="btnDecreaseC" class="buttonRemove">-</button>
+                    <input type="number" id="credits" name="credits" min="0" value="0" required>
+                    <button type="button" id="btnIncreaseC" class="buttonAdd">+</button>
+                </form>
+            
+                <div id="resultCombinations"></div>
+            </div>
+        
+            <script>
+                $(document).ready(function() {
+                    generateCombination(parseInt($("#credits").val()));
+
+                    $("#credits").on("input", function() {
+                        generateCombination(parseInt($(this).val()));
+                    });
+
+                    $("#btnIncreaseC").on("click", function() {
+                        var currentValue = parseInt($("#credits").val());
+                        $("#credits").val(currentValue + 1).trigger("input");
+                    });
+
+                    $("#btnDecreaseC").on("click", function() {
+                        var currentValue = parseInt($("#credits").val());
+                        if (currentValue > 0) {
+                            $("#credits").val(currentValue - 1).trigger("input");
+                        }
+                    });
+
+                    $("#resultCombinations").on("click", "tr", function() {
+                        $(this).toggleClass("highlighted").siblings().removeClass("highlighted");
+                    });
+                });
+
+                function generateCombination(credits) {
+                    var practiceHours = (credits % 2 == 0) ? 0 : 1;
+                    var theoryHours = (credits - practiceHours) / 2;
+                    var combination = 1;
+                    var mods =  ["Curso", "Curso-taller", "Taller"]
+
+                    var tableHTML = "<p>Combinaciones para " + credits + " creditos:</p>";
+                    tableHTML += "<table border='1'>";
+                    tableHTML += "<tr><th>Comb</th><th>Horas de teoria</th><th>Horas de practica</th><th>Horas otras</th><th>Mod</th></tr>";
+
+                    while (theoryHours >= 0) {
+                        var otherHours = 0;
+                        var mod = determinateMod(theoryHours, practiceHours, otherHours);
+                        tableHTML += "<tr><td>" + combination + "</td><td>" + theoryHours + "</td><td>" + practiceHours + "</td> <td>" + otherHours + "</td> <td> " + mod + "</td> </tr>";
+                        combination++;
+                        for (var i = 1; (i <= practiceHours && (otherHours * 30) <= 150); i++) {
+                            otherHours = i;
+                            var practiceHoursLeft = practiceHours - otherHours;
+                            mod = determinateMod(theoryHours, practiceHoursLeft, otherHours);
+                            tableHTML += "<tr><td>" + combination + "</td><td>" + theoryHours + "</td><td>" + practiceHoursLeft + "</td> <td>" + otherHours * 30 + "</td> <td> " + mod + "</td> </tr>";
+                            combination++;
+                        }
+                        practiceHours += 2;
+                        theoryHours--;
+                    }
+
+                    function determinateMod(theoryHours, practiceHours, otherHours) {
+                        if (theoryHours > 0 && practiceHours == 0 && otherHours == 0) {
+                            return mods[0];
+                        } else if (theoryHours > 0 && practiceHours > 0 && otherHours == 0) {
+                            return mods[1];
+                        } else if (theoryHours == 0 && practiceHours > 0 && otherHours == 0) {
+                            return mods[2];
+                        } else {
+                            return "No aplica";
+                        }
+                    }
+                    tableHTML += "</table>";
+                    $("#resultCombinations").html(tableHTML);
+                }
+            </script>
+            
+            <div>
+                <h2>Calculo manual de creditos</h2>
+                <table>
+                    <tr>
+                        <th>Distribucion</th>
+                        <th>Horas</th>
+                        <th>Creditos</th>
+                    </tr>
+                    <tr>
+                        <td>Teoria</td>
+                        <td>
+                            <button type="button" class="btnDecrease buttonRemove" data-target="#hours_theory">-</button>
+                            <input type="number" id="hours_theory" min="0" value="0" required>
+                            <button type="button" class="btnIncrease buttonAdd" data-target="#hours_theory">+</button>
+                        </td>
+                        <td><label id="credits_theory">0</label></td>
+                    </tr>
+                    <tr>
+                        <td>Practica</td>
+                        <td>
+                            <button type="button" class="btnDecrease buttonRemove" data-target="#hours_practice">-</button>
+                            <input type="number" id="hours_practice" min="0" value="0" required>
+                            <button type="button" class="btnIncrease buttonAdd" data-target="#hours_practice">+</button>
+                        </td>
+                        <td><label id="credits_practice">0</label></td>
+                    </tr>
+                    <tr>
+                        <td>Otras</td>
+                        <td>
+                            <button type="button" class="btnDecreaseOther buttonRemove" data-target="#hours_other">-</button>
+                            <input type="number" id="hours_other" min="0" value="0" required>
+                            <button type="button" class="btnIncreaseOther buttonAdd" data-target="#hours_other">+</button>
+                        </td>
+                        <td><label id="credits_other">0</label></td>
+                    </tr>
+                    <tr>
+                        <td>Total</td>
+                        <td><label id="hours_total">0</label></td>
+                        <td><label id="credits_total">0</label></td>
+                    </tr>
+                </table>
+            </div>
+            
+            <script>
+                $(document).ready(function() {
+                    updateCredits();
+                    
+                    $(".btnIncrease").on("click", function() {
+                        var target = $($(this).data("target"));
+                        target.val(parseInt(target.val()) + 1);
+                        updateCredits();
+                    });
+
+                    $(".btnDecrease").on("click", function() {
+                        var target = $($(this).data("target"));
+                        var newValue = parseInt(target.val()) - 1;
+                        if (newValue >= 0) {
+                            target.val(newValue);
+                            updateCredits();
+                        }
+                    });
+
+                    $(".btnIncreaseOther").on("click", function() {
+                        var target = $($(this).data("target"));
+                        if (parseInt(target.val()) < 180) {
+                            target.val(parseInt(target.val()) + 30);
+                        }
+                        updateCredits();
+                    });
+
+                    $(".btnDecreaseOther").on("click", function() {
+                        var target = $($(this).data("target"));
+                        var newValue = parseInt(target.val()) - 30;
+                        if (newValue >= 0) {
+                            target.val(newValue);
+                            updateCredits();
+                        }
+                    });
+
+                    $("#hours_theory, #hours_practice, #hours_other").on("input", updateCredits);
+                });
+
+                function updateCredits() {
+                    var hoursTheory = parseInt($("#hours_theory").val());
+                    var hoursPractice = parseInt($("#hours_practice").val());
+                    var hoursOther = parseInt($("#hours_other").val());
+
+                    var creditsTheory = hoursTheory * 2;
+                    var creditsPractice = hoursPractice;
+                    var creditsOther = Math.floor(hoursOther / 30);
+                    
+                    $("#credits_theory").text(creditsTheory);
+                    $("#credits_practice").text(creditsPractice);
+                    $("#credits_other").text(creditsOther);
+
+                    var totalHours = hoursTheory + hoursPractice + hoursOther;
+                    var totalCredits = creditsTheory + creditsPractice + creditsOther;
+
+                    $("#hours_total").text(totalHours);
+                    $("#credits_total").text(totalCredits);
+                }
+            </script>
+
+
+            <div id="fontControls">
+                <button id="increaseFont" class="buttonAdd">Aumentar Fuente</button>
+                <button id="decreaseFont" class="buttonRemove">Reducir Fuente</button>
+            </div>
+
+            <script>
+                $(document).ready(function() {
+                    // Agregar event listeners para los botones de aumentar y disminuir fuente
+                    $("#increaseFont").on("click", function() {
+                        changeFontSize("increase");
+                    });
+                
+                    $("#decreaseFont").on("click", function() {
+                        changeFontSize("decrease");
+                    });
+                });
+                
+                function changeFontSize(action) {
+                    var currentFontSize = parseInt($("body").css("font-size"));
+                
+                    var increment = 2;
+            
+                    if (action === "increase") {
+                        $("body").css("font-size", currentFontSize + increment + "px");
+                    } else if (action === "decrease") {
+                        $("body").css("font-size", currentFontSize - increment + "px");
+                    }
+                }
+            </script>
+        </div>        
+    </body>
+</html>
